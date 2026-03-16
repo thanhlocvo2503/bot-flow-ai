@@ -6,7 +6,7 @@ const Logo = () => (
             <HandMetal className="size-7" />
         </div>
 
-        <span className="text-xl font-semibold">BotFlow AI</span>
+        <h1 className="text-xl font-semibold">BotFlow AI</h1>
     </a>
 );
 

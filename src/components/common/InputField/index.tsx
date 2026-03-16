@@ -55,14 +55,14 @@ const Input = (
             )}
             <div className="w-full relative flex items-center">
                 {leftIcon && (
-                    <span className="absolute left-0 inset-y-0 flex top-3 pl-3 pointer-events-none">
+                    <span className="absolute left-0 inset-y-0 flex top-5 pl-3 pointer-events-none">
                         {leftIcon}
                     </span>
                 )}
 
                 <div className="w-full">
                     <input
-                        className={`${inputClass} w-full p-3 block text-xs bg-transparent rounded-sm border ${isError ? 'border-red-500' : 'border-gray-400'} ${
+                        className={`${inputClass} w-full bg-gray-50 text-gray-500 p-3 block text-sm rounded-xl border ${isError ? 'border-red-500' : 'border-gray-100'} ${
                             leftIcon ? 'pl-10' : ''
                         }`}
                         type="text"

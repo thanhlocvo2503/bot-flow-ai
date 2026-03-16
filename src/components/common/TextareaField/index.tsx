@@ -54,14 +54,14 @@ const Textarea = (
             )}
             <div className="w-full relative flex items-center">
                 {leftIcon && (
-                    <span className="absolute left-0 inset-y-0 flex items-center pl-3 pointer-events-none">
+                    <span className="absolute left-0 inset-x-0 flex top-5 items-center pl-3 pointer-events-none">
                         {leftIcon}
                     </span>
                 )}
 
                 <div className="w-full">
                     <textarea
-                        className={`${inputClass} w-full p-3 block text-xs bg-transparent rounded-sm border ${isError ? 'border-red-500' : 'border-gray-400'} ${
+                        className={`${inputClass} w-full p-3 block text-sm text-gray-500 bg-gray-50 rounded-xl border ${isError ? 'border-red-500' : 'border-gray-100'} ${
                             leftIcon ? 'pl-10' : ''
                         }`}
                         onChange={handleChangeValue}
