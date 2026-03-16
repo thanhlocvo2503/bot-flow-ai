@@ -1,5 +1,7 @@
+import { Header } from './components';
+
 const App = () => {
-    return <button>hello</button>;
+    return <Header />;
 };
 
 export default App;
