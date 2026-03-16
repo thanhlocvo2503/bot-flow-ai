@@ -1,0 +1,54 @@
+:root {
+    --font-poppins: 'Poppins', sans-serif;
+}
+
+/* @media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+        --font-poppins: "Poppins", sans-serif;
+    }
+} */
+
+html {
+    font-size: 16px;
+}
+
+@media (min-width: 1440px) {
+    html {
+        font-size: 13.75px;
+    }
+}
+
+@media (max-width: 1440px) {
+    html {
+        font-size: 10.75px;
+    }
+}
+
+body {
+    font-family: var(--font-poppins);
+}
+
+/* * {
+  box-sizing: border-box;
+} */
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
