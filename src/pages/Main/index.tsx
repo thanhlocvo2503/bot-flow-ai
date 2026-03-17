@@ -1,4 +1,4 @@
-import { BotCard, FlowForm } from '@/components';
+import { BotCard, ExecutionStep, FlowForm } from '@/components';
 
 export const MainPage = () => (
     <div className="w-full max-w-4xl m-auto flex flex-col items-center my-16">
@@ -11,5 +11,7 @@ export const MainPage = () => (
         <FlowForm />
 
         <BotCard />
+
+        <ExecutionStep />
     </div>
 );
