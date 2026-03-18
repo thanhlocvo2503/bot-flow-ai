@@ -1,17 +1,48 @@
+import { useState } from 'react';
+
+// Components
 import { BotCard, ExecutionStep, FlowForm } from '@/components';
 
-export const MainPage = () => (
-    <div className="w-full max-w-4xl m-auto flex flex-col items-center my-16">
-        <h2 className="text-5xl font-semibold">Start Automation</h2>
-        <p className="mt-2 text-lg text-gray-500 w-143 text-center">
-            Configure your bot by providing a URL and specific instructions for
-            the automation task.
-        </p>
+// Types
+import { AffiliateItem } from '@/types';
+import { TFlowForm } from '@/components/FlowForm/schema';
 
-        <FlowForm />
+// Constants
+import { STATUS } from '@/constants';
 
-        <BotCard />
+// Hooks
+import { useAgentSSEMultiStream } from '@/hooks';
 
-        <ExecutionStep />
-    </div>
-);
+export const MainPage = () => {
+    const [statusBot, setStatusBot] = useState<STATUS>(STATUS.SLEEPING);
+    const [items, setItems] = useState<AffiliateItem[]>([]);
+
+    const { streamMap, isLoading, startAll } = useAgentSSEMultiStream(items);
+
+    const handleSubmitForm = (data: TFlowForm) => {
+        setItems([data]);
+        setStatusBot(STATUS.ACTIVE);
+    };
+
+    return (
+        <div className="w-full max-w-4xl m-auto flex flex-col items-center my-16">
+            <h2 className="text-5xl font-semibold">Start Automation</h2>
+            <p className="mt-2 text-lg text-gray-500 w-143 text-center">
+                Configure your bot by providing a URL and specific instructions
+                for the automation task.
+            </p>
+
+            <FlowForm onSubmit={handleSubmitForm} isLoading={isLoading} />
+
+            <BotCard status={statusBot} />
+
+            {items.length ? (
+                <ExecutionStep
+                    items={items}
+                    streamMap={streamMap}
+                    startAll={startAll}
+                />
+            ) : null}
+        </div>
+    );
+};

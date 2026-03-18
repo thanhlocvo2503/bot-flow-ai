@@ -4,24 +4,30 @@ import { Globe, Pause, Play, SquareTerminal } from 'lucide-react';
 
 // Components
 import { Button, InputField, TextareaField } from '@/components/common';
+import { Spinner } from '../ui/spinner';
 
 // Schema
 import { FlowSchema, TFlowForm } from './schema';
 
-const FlowForm = () => {
+interface FlowFormProps {
+    isLoading?: boolean;
+    onSubmit: (data: TFlowForm) => void;
+}
+
+const FlowForm = ({ isLoading = false, onSubmit }: FlowFormProps) => {
     const { control, handleSubmit } = useForm<TFlowForm>({
         mode: 'onBlur',
         reValidateMode: 'onChange',
         resolver: zodResolver(FlowSchema),
         defaultValues: {
             url: '',
-            prompt: '',
+            prompt: 'extract all pricing of their service',
         },
     });
 
     const handleSubmitForm = (data: TFlowForm) => {
         try {
-            console.log(data);
+            onSubmit(data);
         } catch (error) {
             console.log(error);
         }
@@ -68,8 +74,12 @@ const FlowForm = () => {
                 />
 
                 <div className="w-full flex gap-4">
-                    <Button type="submit" className="shadow-md w-[70%]">
-                        <Play /> Run Bot
+                    <Button
+                        type="submit"
+                        className="shadow-md w-[70%]"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? <Spinner /> : <Play />} Run Bot
                     </Button>
                     <Button className="shadow-md w-[28%] bg-gray-600 hover:bg-gray-500">
                         <Pause /> Pause

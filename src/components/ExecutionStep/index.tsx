@@ -1,5 +1,4 @@
-// Mocks
-import { mockAffiliateData } from '@/__mocks__';
+import { useEffect } from 'react';
 
 // Components
 import {
@@ -9,8 +8,8 @@ import {
     AccordionTrigger,
 } from '@/components/ui/accordion';
 
-// Hooks
-import { useMockAgentExecutionStream } from '@/hooks';
+// Types
+import type { AffiliateItem, AgentStreamStateMap } from '@/types';
 
 const statusColorMap: Record<string, string> = {
     pending: 'text-gray-400',
@@ -19,60 +18,195 @@ const statusColorMap: Record<string, string> = {
     error: 'text-red-500',
 };
 
-const ExecutionStep = () => {
-    const data = mockAffiliateData;
-    const { contents } = useMockAgentExecutionStream(data);
+// const mockItems: AffiliateItem[] = [
+//     { name: 'Firecrawl', url: 'https://firecrawl.dev' },
+// ];
+
+interface ExecutionStepProps {
+    items: AffiliateItem[];
+    startAll: () => void;
+    streamMap: AgentStreamStateMap;
+}
+
+const ExecutionStep = ({ items, startAll, streamMap }: ExecutionStepProps) => {
+    useEffect(() => {
+        startAll();
+    }, [startAll]);
 
     return (
         <Accordion
             type="multiple"
-            className="p-8 mt-8 bg-white rounded-2xl shadow-2xl space-y-4"
+            className="mt-8 space-y-4 rounded-2xl bg-white p-8 shadow-2xl"
         >
-            {data.map((item, index) => (
-                <AccordionItem
-                    key={item.url}
-                    value={`item-${index}`}
-                    className="border rounded-xl px-4"
-                >
-                    <AccordionTrigger className="text-left">
-                        <div className="flex flex-col items-start gap-1">
-                            <span className="font-semibold text-base">
-                                {item.name}
-                            </span>
-                            <span className="text-sm text-gray-500 break-all">
-                                {item.url}
-                            </span>
-                        </div>
-                    </AccordionTrigger>
+            {items.map((item, index) => {
+                const state = streamMap[item.url];
 
-                    <AccordionContent>
-                        <div className="mt-5 max-h-100 overflow-y-auto pr-2 space-y-4 custom-scroll">
-                            {(contents[item.url] || []).map((tool) => (
-                                <div
-                                    key={tool.id}
-                                    className="border rounded-md p-4 bg-slate-50"
-                                >
-                                    <div className="flex items-center justify-between mb-3">
+                return (
+                    <AccordionItem
+                        key={item.url}
+                        value={`item-${index}`}
+                        className="rounded-xl border px-4"
+                    >
+                        <AccordionTrigger className="text-left">
+                            <div className="flex flex-col items-start gap-1">
+                                <span className="text-base font-semibold">
+                                    {item.name}
+                                </span>
+                                <span className="break-all text-sm text-gray-500">
+                                    {item.url}
+                                </span>
+                            </div>
+                        </AccordionTrigger>
+
+                        <AccordionContent className="overflow-hidden">
+                            <div className="custom-scroll mt-5 h-135 space-y-5 overflow-y-auto pr-2">
+                                <div className="rounded-xl border bg-slate-50 p-4">
+                                    <div className="mb-2 flex items-center justify-between">
                                         <span className="font-medium">
-                                            {tool.toolName}
+                                            Stream Info
                                         </span>
-
-                                        <span
-                                            className={`text-xs font-medium uppercase ${statusColorMap[tool.status]}`}
-                                        >
-                                            {tool.status}
+                                        <span className="text-xs text-gray-500">
+                                            {state?.isStreaming
+                                                ? 'Streaming...'
+                                                : state?.isDone
+                                                  ? 'Completed'
+                                                  : 'Idle'}
                                         </span>
                                     </div>
 
-                                    <pre className="whitespace-pre-wrap text-sm leading-6">
-                                        {tool.content || 'Thinking...'}
+                                    <div className="text-sm text-gray-600">
+                                        <span className="font-medium text-gray-800">
+                                            Thread ID:
+                                        </span>{' '}
+                                        <span className="break-all">
+                                            {state?.threadId || '—'}
+                                        </span>
+                                    </div>
+
+                                    {state?.error && (
+                                        <div className="mt-3 text-sm text-red-500">
+                                            {state.error}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="rounded-xl border bg-slate-50 p-4">
+                                    <div className="mb-3 font-medium">
+                                        Statuses
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {state?.statuses?.length ? (
+                                            state.statuses.map((status, i) => (
+                                                <div
+                                                    key={`${status}-${i}`}
+                                                    className="rounded-md border bg-white p-3 text-sm"
+                                                >
+                                                    {status}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-sm text-gray-500">
+                                                No status yet...
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-slate-50 p-4">
+                                    <div className="mb-3 font-medium">
+                                        Tools
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {state?.tools?.length ? (
+                                            state.tools.map((tool) => {
+                                                const status =
+                                                    tool.status === 'error' ||
+                                                    tool.status === 'pending'
+                                                        ? tool.status
+                                                        : tool.output &&
+                                                            tool.assistantMessage
+                                                          ? 'done'
+                                                          : 'running';
+
+                                                return (
+                                                    <div
+                                                        key={tool.id}
+                                                        className="rounded-xl border bg-white p-4"
+                                                    >
+                                                        <div className="mb-3 flex items-center justify-between">
+                                                            <span className="font-medium">
+                                                                {tool.tool}
+                                                            </span>
+                                                            <span
+                                                                className={`text-xs font-semibold uppercase ${statusColorMap[status]}`}
+                                                            >
+                                                                {status}
+                                                            </span>
+                                                        </div>
+
+                                                        {tool.input ? (
+                                                            <div className="mb-3">
+                                                                <div className="mb-1 text-xs font-medium text-gray-500">
+                                                                    Input
+                                                                </div>
+                                                                <pre className="whitespace-pre-wrap rounded-md border bg-slate-50 p-3 text-xs leading-5">
+                                                                    {tool.input}
+                                                                </pre>
+                                                            </div>
+                                                        ) : null}
+
+                                                        <div className="mb-3">
+                                                            <div className="mb-1 text-xs font-medium text-gray-500">
+                                                                Assistant
+                                                                message
+                                                            </div>
+                                                            <pre className="min-h-18 whitespace-pre-wrap rounded-md border bg-slate-50 p-3 text-sm leading-6">
+                                                                {tool.assistantMessage ||
+                                                                    'Thinking...'}
+                                                            </pre>
+                                                        </div>
+
+                                                        {tool.output &&
+                                                        tool.assistantMessage ? (
+                                                            <div>
+                                                                <div className="mb-1 text-xs font-medium text-gray-500">
+                                                                    Output
+                                                                </div>
+                                                                <pre className="whitespace-pre-wrap rounded-md border bg-slate-50 p-3 text-xs leading-5">
+                                                                    {
+                                                                        tool.output
+                                                                    }
+                                                                </pre>
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="text-sm text-gray-500">
+                                                No tools yet...
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-slate-50 p-4">
+                                    <div className="mb-3 font-medium">
+                                        Final answer
+                                    </div>
+
+                                    <pre className="whitespace-pre-wrap rounded-md border bg-white p-4 text-sm leading-6">
+                                        {state?.finalAnswer ||
+                                            'No final answer yet...'}
                                     </pre>
                                 </div>
-                            ))}
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-            ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                );
+            })}
         </Accordion>
     );
 };

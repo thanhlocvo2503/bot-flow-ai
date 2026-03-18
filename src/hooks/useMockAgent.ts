@@ -11,7 +11,7 @@ type TimeoutRefMap = Record<string, number[]>;
 const TOOL_DELAY_GAP = 300;
 const TOKEN_DELAY = 80;
 
-export const useMockAgentExecutionStream = (data: AffiliateItem[]) => {
+export const useMockAgent = (data: AffiliateItem[]) => {
     const [contents, setContents] = useState<ToolExecutionMap>({});
     const timeoutRefs = useRef<TimeoutRefMap>({});
 

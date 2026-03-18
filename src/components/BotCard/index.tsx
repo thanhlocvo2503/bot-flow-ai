@@ -17,7 +17,7 @@ interface IBotCardProps {
     status?: STATUS;
 }
 
-const BotCard = ({ status = STATUS.SLEEPING }: IBotCardProps) => {
+const BotCard = ({ status = STATUS.ACTIVE }: IBotCardProps) => {
     const { content, isStreaming, startStream, resetStream } =
         useMockOllamaStream();
 
@@ -62,7 +62,7 @@ const BotCard = ({ status = STATUS.SLEEPING }: IBotCardProps) => {
             <div
                 className={cn(
                     'size-42 rounded-full m-auto flex items-center justify-center',
-                    status === STATUS.ACTIVE && 'bg-blue-50/25 animate-pulse',
+                    status === STATUS.ACTIVE && 'bg-blue-50/25 animate-bounce',
                 )}
             >
                 <div

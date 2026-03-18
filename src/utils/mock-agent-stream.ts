@@ -36,8 +36,8 @@ const createOllamaChunks = (text: string): string[] => {
 };
 
 export const buildMockToolStreams = (
-    name: string,
-    url: string,
+    name?: string,
+    url?: string,
 ): MockToolStream[] => {
     return [
         {
