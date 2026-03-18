@@ -66,7 +66,7 @@ export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
             updateStreamState(url, () => ({
                 ...createInitialAgentStreamState(),
                 isStreaming: true,
-                error: null,
+                error: undefined,
             }));
         },
         [updateStreamState],
@@ -125,7 +125,7 @@ export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
                                 {
                                     ...prev,
                                     isStreaming: true,
-                                    error: null,
+                                    error: undefined,
                                 },
                                 event,
                             ),
@@ -143,7 +143,7 @@ export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
                             {
                                 ...prev,
                                 isStreaming: true,
-                                error: null,
+                                error: undefined,
                             },
                             event,
                         ),

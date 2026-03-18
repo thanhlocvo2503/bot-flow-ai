@@ -11,12 +11,17 @@ export type ParsedSSEEvent = {
     data: Record<string, any>;
 };
 
-export type ToolStatus = 'pending' | 'running' | 'done' | 'error';
+export enum ToolStatusEnum {
+    PENDING = 'PENDING',
+    RUNNING = 'RUNNING',
+    DONE = 'DONE',
+    ERROR = 'ERROR',
+}
 
 export type ToolExecution = {
     id: string;
     tool: string;
-    status: ToolStatus;
+    status: ToolStatusEnum;
     input?: string;
     output?: string;
     assistantMessage: string;
@@ -32,7 +37,7 @@ export type AgentStreamState = {
     finalAnswer: string;
     isDone: boolean;
     isStreaming: boolean;
-    error?: string | null;
+    error?: string;
 };
 
 export type AgentStreamStateMap = Record<string, AgentStreamState>;
@@ -41,7 +46,7 @@ export type ToolExecutionMock = {
     id: string;
     toolName: string;
     content: string;
-    status: ToolStatus;
+    status: ToolStatusEnum;
 };
 
 export type ToolExecutionMap = Record<string, ToolExecutionMock[]>;

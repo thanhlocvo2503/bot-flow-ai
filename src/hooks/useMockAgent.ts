@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 // Types
-import { AffiliateItem, ToolExecutionMap, ToolStatus } from '@/types';
+import { AffiliateItem, ToolExecutionMap, ToolStatusEnum } from '@/types';
 
 // Utils
 import { buildMockToolStreams } from '@/utils';
@@ -27,7 +27,7 @@ export const useMockAgent = (data: AffiliateItem[]) => {
                 id: tool.toolId,
                 toolName: tool.toolName,
                 content: '',
-                status: 'pending',
+                status: ToolStatusEnum.PENDING,
             }));
         });
 
@@ -49,7 +49,10 @@ export const useMockAgent = (data: AffiliateItem[]) => {
                         ...prev,
                         [item.url]: (prev[item.url] || []).map((currentTool) =>
                             currentTool.id === tool.toolId
-                                ? { ...currentTool, status: 'running' }
+                                ? {
+                                      ...currentTool,
+                                      status: ToolStatusEnum.RUNNING,
+                                  }
                                 : currentTool,
                         ),
                     }));
@@ -81,9 +84,9 @@ export const useMockAgent = (data: AffiliateItem[]) => {
                                         return {
                                             ...currentTool,
                                             content: nextContent,
-                                            status: (parsed.done
-                                                ? 'done'
-                                                : 'running') as ToolStatus,
+                                            status: parsed.done
+                                                ? ToolStatusEnum.DONE
+                                                : ToolStatusEnum.RUNNING,
                                         };
                                     },
                                 );

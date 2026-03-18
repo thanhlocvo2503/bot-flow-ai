@@ -1,4 +1,9 @@
-import type { AgentStreamState, ParsedSSEEvent, ToolExecution } from '@/types';
+import {
+    ToolStatusEnum,
+    AgentStreamState,
+    ParsedSSEEvent,
+    ToolExecution,
+} from '@/types';
 
 export const createInitialAgentStreamState = (): AgentStreamState => ({
     threadId: undefined,
@@ -8,7 +13,7 @@ export const createInitialAgentStreamState = (): AgentStreamState => ({
     finalAnswer: '',
     isDone: false,
     isStreaming: false,
-    error: null,
+    error: undefined,
 });
 
 const createId = (prefix: string) =>
@@ -28,7 +33,7 @@ const updateToolById = (
 const createTool = (toolName: string, input: unknown): ToolExecution => ({
     id: createId(`tool-${toolName}`),
     tool: toolName,
-    status: 'running',
+    status: ToolStatusEnum.RUNNING,
     input: stringifySafe(input),
     output: '',
     assistantMessage: '',
@@ -83,7 +88,7 @@ export const reduceAgentSSEEvent = (
                         prev.activeToolId,
                         (tool) => ({
                             ...tool,
-                            status: 'done',
+                            status: ToolStatusEnum.DONE,
                             output: parsedOutput,
                             endedAt: Date.now(),
                         }),
