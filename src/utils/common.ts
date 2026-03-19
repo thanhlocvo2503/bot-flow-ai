@@ -57,3 +57,6 @@ export function createMockOllamaStream(delay = 120) {
         },
     });
 }
+
+export const formatNumber = (value: number) =>
+    new Intl.NumberFormat().format(value);

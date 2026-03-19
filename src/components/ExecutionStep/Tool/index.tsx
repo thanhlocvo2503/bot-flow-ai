@@ -5,6 +5,7 @@ import { ToolExecution, ToolStatusEnum } from '@/types';
 
 // Constants
 import { STATUS_COLOR_MAP } from '@/constants';
+import TrafficDialog from '@/components/TrafficDialog';
 
 interface ToolProps {
     tools: ToolExecution[];
@@ -37,14 +38,20 @@ const Tool = ({ tools = [] }: ToolProps) => {
                                 className="rounded-xl border bg-white p-4"
                             >
                                 <div className="mb-3 flex items-center justify-between">
-                                    <span className="font-medium">
-                                        {tool.tool}
-                                    </span>
-                                    <span
-                                        className={`text-xs font-semibold uppercase ${STATUS_COLOR_MAP[status]}`}
-                                    >
-                                        {status}
-                                    </span>
+                                    <div className="flex items-start flex-col gap-1">
+                                        <span className="font-medium">
+                                            {tool.tool}
+                                        </span>
+
+                                        <span
+                                            className={`text-xs font-semibold uppercase ${STATUS_COLOR_MAP[status]}`}
+                                        >
+                                            {status}
+                                        </span>
+                                    </div>
+                                    {tool.tool === 'traffic' ? (
+                                        <TrafficDialog />
+                                    ) : null}
                                 </div>
 
                                 {tool.input ? (
