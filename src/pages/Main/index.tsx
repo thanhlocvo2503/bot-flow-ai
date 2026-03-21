@@ -17,7 +17,8 @@ export const MainPage = () => {
     const [statusBot, setStatusBot] = useState<STATUS>(STATUS.SLEEPING);
     const [items, setItems] = useState<AffiliateItem[]>([]);
 
-    const { streamMap, isLoading, startAll } = useAgentSSEMultiStream(items);
+    const { streamMap, isLoading, startAll, stopAll } =
+        useAgentSSEMultiStream(items);
 
     const handleSubmitForm = (data: TFlowForm) => {
         setItems([data]);
@@ -32,12 +33,17 @@ export const MainPage = () => {
                 for the automation task.
             </p>
 
-            <FlowForm onSubmit={handleSubmitForm} isLoading={isLoading} />
+            <FlowForm
+                onSubmit={handleSubmitForm}
+                isLoading={isLoading}
+                onStopAgent={stopAll}
+            />
 
             <BotCard status={statusBot} />
 
             {items.length ? (
                 <ExecutionStep
+                    isLoading={isLoading}
                     items={items}
                     streamMap={streamMap}
                     startAll={startAll}

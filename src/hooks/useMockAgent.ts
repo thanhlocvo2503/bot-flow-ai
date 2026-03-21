@@ -27,7 +27,7 @@ export const useMockAgent = (data: AffiliateItem[]) => {
                 id: tool.toolId,
                 toolName: tool.toolName,
                 content: '',
-                status: ToolStatusEnum.PENDING,
+                status: ToolStatusEnum.RUNNING,
             }));
         });
 

@@ -3,11 +3,12 @@ import {
     AgentStreamState,
     ParsedSSEEvent,
     ToolExecution,
+    StatusItem,
 } from '@/types';
 
 export const createInitialAgentStreamState = (): AgentStreamState => ({
     threadId: undefined,
-    statuses: [],
+    steps: [],
     tools: [],
     activeToolId: undefined,
     finalAnswer: '',
@@ -22,23 +23,56 @@ const createId = (prefix: string) =>
 const stringifySafe = (value: unknown) =>
     typeof value === 'string' ? value : JSON.stringify(value ?? {}, null, 2);
 
-const getLastToolId = (tools: ToolExecution[]) => tools.at(-1)?.id;
-
 const updateToolById = (
     tools: ToolExecution[],
     toolId: string,
     updater: (tool: ToolExecution) => ToolExecution,
-) => tools.map((tool) => (tool.id === toolId ? updater(tool) : tool));
+) => {
+    const index = tools.findIndex((tool) => tool.id === toolId);
 
-const createTool = (toolName: string, input: unknown): ToolExecution => ({
+    if (index === -1) {
+        return tools;
+    }
+
+    const nextTools = [...tools];
+    nextTools[index] = updater(nextTools[index]);
+    return nextTools;
+};
+
+const getLastRunningToolIdByName = (
+    tools: ToolExecution[],
+    toolName: string,
+) => {
+    for (let i = tools.length - 1; i >= 0; i--) {
+        const tool = tools[i];
+        if (tool.tool === toolName && tool.status === ToolStatusEnum.RUNNING) {
+            return tool.id;
+        }
+    }
+
+    return undefined;
+};
+
+const createTool = (
+    toolName: string,
+    input: unknown,
+    message?: string,
+    traceId?: string,
+): ToolExecution => ({
     id: createId(`tool-${toolName}`),
     tool: toolName,
     status: ToolStatusEnum.RUNNING,
     input: stringifySafe(input),
     output: '',
-    assistantMessage: '',
+    message: message || '',
+    traceId,
     startedAt: Date.now(),
 });
+
+const hasMeaningfulText = (value?: string) => {
+    if (!value) return false;
+    return value.trim().length > 0;
+};
 
 export const reduceAgentSSEEvent = (
     prev: AgentStreamState,
@@ -48,84 +82,94 @@ export const reduceAgentSSEEvent = (
 
     switch (event) {
         case 'status': {
-            if (!data.message && !data.threadId) {
-                return prev;
-            }
+            const nextStatus: StatusItem | null = data.message
+                ? {
+                      message: String(data.message),
+                      code: data.code ? String(data.code) : undefined,
+                      tool: data.tool ? String(data.tool) : undefined,
+                      traceId: data.traceId ? String(data.traceId) : undefined,
+                      elapsedMs:
+                          typeof data.elapsedMs === 'number'
+                              ? data.elapsedMs
+                              : undefined,
+                      createdAt: Date.now(),
+                  }
+                : null;
 
             return {
                 ...prev,
                 threadId: data.threadId || prev.threadId,
-                statuses: data.message
-                    ? [...prev.statuses, String(data.message)]
-                    : prev.statuses,
+                steps: nextStatus ? [...prev.steps, nextStatus] : prev.steps,
             };
         }
 
-        case 'tool': {
+        case 'tool_start': {
             const toolName = String(data.tool || 'unknown_tool');
+            const newTool = createTool(
+                toolName,
+                data.input,
+                data.message ? String(data.message) : '',
+                data.traceId ? String(data.traceId) : undefined,
+            );
 
-            if (data.phase === 'start') {
-                const newTool = createTool(toolName, data.input);
-
-                return {
-                    ...prev,
-                    tools: [...prev.tools, newTool],
-                    activeToolId: newTool.id,
-                };
-            }
-
-            if (data.phase === 'end') {
-                if (!prev.activeToolId) {
-                    return prev;
-                }
-
-                const parsedOutput = stringifySafe(data.output);
-
-                return {
-                    ...prev,
-                    tools: updateToolById(
-                        prev.tools,
-                        prev.activeToolId,
-                        (tool) => ({
-                            ...tool,
-                            status: ToolStatusEnum.DONE,
-                            output: parsedOutput,
-                            endedAt: Date.now(),
-                        }),
-                    ),
-                    activeToolId: undefined,
-                };
-            }
-
-            return prev;
+            return {
+                ...prev,
+                tools: [...prev.tools, newTool],
+                activeToolId: newTool.id,
+            };
         }
 
-        case 'token': {
-            if (data.value === undefined || data.value === null) {
-                return prev;
-            }
-
-            const token = String(data.value);
-            const targetToolId = prev.activeToolId ?? getLastToolId(prev.tools);
+        case 'tool_end': {
+            const toolName = String(data.tool || 'unknown_tool');
+            const targetToolId = getLastRunningToolIdByName(
+                prev.tools,
+                toolName,
+            );
 
             if (!targetToolId) {
                 return prev;
             }
 
+            const parsedOutput = stringifySafe(data.output);
+            const elapsedMs =
+                typeof data.elapsedMs === 'number' ? data.elapsedMs : undefined;
+            const endMessage = data.message ? String(data.message) : '';
+
             return {
                 ...prev,
-                tools: updateToolById(prev.tools, targetToolId, (tool) => ({
-                    ...tool,
-                    assistantMessage: tool.assistantMessage + token,
-                })),
+                tools: updateToolById(prev.tools, targetToolId, (tool) => {
+                    const shouldFallbackError =
+                        !hasMeaningfulText(parsedOutput) &&
+                        !hasMeaningfulText(endMessage);
+
+                    return {
+                        ...tool,
+                        status: shouldFallbackError
+                            ? ToolStatusEnum.ERROR
+                            : ToolStatusEnum.DONE,
+                        output: parsedOutput,
+                        message: hasMeaningfulText(endMessage)
+                            ? endMessage
+                            : tool.message,
+                        elapsedMs,
+                        traceId: data.traceId
+                            ? String(data.traceId)
+                            : tool.traceId,
+                        endedAt: Date.now(),
+                    };
+                }),
+                activeToolId:
+                    prev.activeToolId === targetToolId
+                        ? undefined
+                        : prev.activeToolId,
             };
         }
 
-        case 'final': {
+        case 'final_answer': {
             return {
                 ...prev,
                 threadId: data.threadId || prev.threadId,
-                finalAnswer: String(data.answer || ''),
+                finalAnswer: String(data.content || ''),
                 activeToolId: undefined,
                 isDone: true,
                 isStreaming: false,

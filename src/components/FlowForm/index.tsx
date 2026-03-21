@@ -12,9 +12,14 @@ import { FlowSchema, TFlowForm } from './schema';
 interface FlowFormProps {
     isLoading?: boolean;
     onSubmit: (data: TFlowForm) => void;
+    onStopAgent?: () => void;
 }
 
-const FlowForm = ({ isLoading = false, onSubmit }: FlowFormProps) => {
+const FlowForm = ({
+    isLoading = false,
+    onSubmit,
+    onStopAgent,
+}: FlowFormProps) => {
     const { control, handleSubmit } = useForm<TFlowForm>({
         mode: 'onBlur',
         reValidateMode: 'onChange',
@@ -81,7 +86,10 @@ const FlowForm = ({ isLoading = false, onSubmit }: FlowFormProps) => {
                     >
                         {isLoading ? <Spinner /> : <Play />} Run Bot
                     </Button>
-                    <Button className="shadow-md w-[28%] bg-gray-600 hover:bg-gray-500">
+                    <Button
+                        className="shadow-md w-[28%] bg-gray-600 hover:bg-gray-500"
+                        onClick={onStopAgent}
+                    >
                         <Pause /> Pause
                     </Button>
                 </div>

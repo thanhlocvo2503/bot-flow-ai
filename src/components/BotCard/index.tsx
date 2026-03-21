@@ -33,30 +33,32 @@ const BotCard = ({ status = STATUS.ACTIVE }: IBotCardProps) => {
 
     return (
         <div className="w-full flex flex-col p-8 mt-8 bg-white rounded-2xl shadow-2xl">
-            <div
-                className={cn(
-                    'flex items-center gap-2 shadow-xl border border-gray-100 shadow-gray-200 rounded-2xl w-45',
-                    status === STATUS.ACTIVE &&
-                        'text-green-300 shadow-green-200',
-                )}
-            >
-                <Dot
+            <div className="flex justify-between">
+                <div
                     className={cn(
-                        'size-15 text-gray-600',
+                        'flex items-center gap-2 shadow-xl border border-gray-100 shadow-gray-200 rounded-2xl w-45',
                         status === STATUS.ACTIVE &&
-                            'text-green-600 animate-pulse',
-                    )}
-                />
-
-                <span
-                    className={cn(
-                        'text-gray-600',
-                        status === STATUS.ACTIVE &&
-                            'text-green-600 animate-pulse',
+                            'text-green-300 shadow-green-200',
                     )}
                 >
-                    {isStreaming ? 'THINKING...' : status}
-                </span>
+                    <Dot
+                        className={cn(
+                            'size-15 text-gray-600',
+                            status === STATUS.ACTIVE &&
+                                'text-green-600 animate-pulse',
+                        )}
+                    />
+
+                    <span
+                        className={cn(
+                            'text-gray-600',
+                            status === STATUS.ACTIVE &&
+                                'text-green-600 animate-pulse',
+                        )}
+                    >
+                        {isStreaming ? 'THINKING...' : status}
+                    </span>
+                </div>
             </div>
 
             <div

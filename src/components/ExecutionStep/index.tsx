@@ -19,12 +19,18 @@ import type { AffiliateItem, AgentStreamStateMap } from '@/types';
 // ];
 
 interface ExecutionStepProps {
+    isLoading?: boolean;
     items: AffiliateItem[];
     startAll: () => void;
     streamMap: AgentStreamStateMap;
 }
 
-const ExecutionStep = ({ items, startAll, streamMap }: ExecutionStepProps) => {
+const ExecutionStep = ({
+    items,
+    isLoading,
+    startAll,
+    streamMap,
+}: ExecutionStepProps) => {
     useEffect(() => {
         startAll();
     }, [startAll]);
@@ -63,20 +69,25 @@ const ExecutionStep = ({ items, startAll, streamMap }: ExecutionStepProps) => {
                                     threadId={state?.threadId}
                                 />
 
-                                <Connect items={state?.statuses} />
+                                <Connect items={state?.steps} />
 
-                                <Tool tools={state?.tools} />
+                                <Tool
+                                    isRunning={isLoading}
+                                    tools={state?.tools}
+                                />
 
-                                <div className="rounded-xl border bg-slate-50 p-4">
-                                    <div className="mb-3 font-medium">
-                                        Final answer
+                                {state?.finalAnswer && (
+                                    <div className="rounded-xl border bg-slate-50 p-4">
+                                        <div className="mb-3 font-medium">
+                                            Final answer
+                                        </div>
+
+                                        <pre className="whitespace-pre-wrap rounded-md border bg-white p-4 text-sm leading-6">
+                                            {state?.finalAnswer ||
+                                                'No final answer yet...'}
+                                        </pre>
                                     </div>
-
-                                    <pre className="whitespace-pre-wrap rounded-md border bg-white p-4 text-sm leading-6">
-                                        {state?.finalAnswer ||
-                                            'No final answer yet...'}
-                                    </pre>
-                                </div>
+                                )}
                             </div>
                         </AccordionContent>
                     </AccordionItem>

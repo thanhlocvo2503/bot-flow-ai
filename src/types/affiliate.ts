@@ -1,22 +1,28 @@
-export type AffiliateItem = {
-    name?: string;
-    url: string;
-    prompt: string;
-};
+export enum ToolStatusEnum {
+    RUNNING = 'RUNNING',
+    DONE = 'DONE',
+    ERROR = 'ERROR',
+}
 
-export type SSEEventName = 'status' | 'tool' | 'token' | 'final';
+export type SSEEventName =
+    | 'status'
+    | 'tool_start'
+    | 'tool_end'
+    | 'final_answer';
 
 export type ParsedSSEEvent = {
     event: SSEEventName;
     data: Record<string, any>;
 };
 
-export enum ToolStatusEnum {
-    PENDING = 'PENDING',
-    RUNNING = 'RUNNING',
-    DONE = 'DONE',
-    ERROR = 'ERROR',
-}
+export type StatusItem = {
+    message: string;
+    code?: string;
+    tool?: string;
+    traceId?: string;
+    elapsedMs?: number;
+    createdAt: number;
+};
 
 export type ToolExecution = {
     id: string;
@@ -24,14 +30,16 @@ export type ToolExecution = {
     status: ToolStatusEnum;
     input?: string;
     output?: string;
-    assistantMessage: string;
+    message?: string;
+    traceId?: string;
+    elapsedMs?: number;
     startedAt?: number;
     endedAt?: number;
 };
 
 export type AgentStreamState = {
     threadId?: string;
-    statuses: string[];
+    steps: StatusItem[];
     tools: ToolExecution[];
     activeToolId?: string;
     finalAnswer: string;
@@ -55,3 +63,9 @@ export interface StartPayload {
     domain: string;
     prompt: string;
 }
+
+export type AffiliateItem = {
+    name?: string;
+    url: string;
+    prompt: string;
+};

@@ -1,4 +1,4 @@
-import { ParsedSSEEvent, SSEEventName } from '@/types';
+import type { ParsedSSEEvent, SSEEventName } from '@/types';
 
 export const parseSSEChunk = (raw: string): ParsedSSEEvent[] => {
     const blocks = raw.split('\n\n').filter((block) => block.trim());
@@ -6,7 +6,6 @@ export const parseSSEChunk = (raw: string): ParsedSSEEvent[] => {
     return blocks
         .map((block) => {
             const lines = block.split('\n');
-
             const eventLine = lines.find((line) => line.startsWith('event:'));
             const dataLines = lines.filter((line) => line.startsWith('data:'));
 
