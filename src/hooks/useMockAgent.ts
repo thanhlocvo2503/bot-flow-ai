@@ -21,9 +21,9 @@ export const useMockAgent = (data: AffiliateItem[]) => {
         const nextState: ToolExecutionMap = {};
 
         data.forEach((item) => {
-            const tools = buildMockToolStreams(item.name, item.url);
+            const tools = buildMockToolStreams(item.name, item.domain);
 
-            nextState[item.url] = tools.map((tool) => ({
+            nextState[item.domain] = tools.map((tool) => ({
                 id: tool.toolId,
                 toolName: tool.toolName,
                 content: '',
@@ -34,9 +34,9 @@ export const useMockAgent = (data: AffiliateItem[]) => {
         setContents(nextState);
 
         data.forEach((item, itemIndex) => {
-            const tools = buildMockToolStreams(item.name, item.url);
+            const tools = buildMockToolStreams(item.name, item.domain);
 
-            timeoutRefs.current[item.url] = [];
+            timeoutRefs.current[item.domain] = [];
 
             tools.forEach((tool, toolIndex) => {
                 const baseDelay =
@@ -47,18 +47,19 @@ export const useMockAgent = (data: AffiliateItem[]) => {
                 const startTimeout = window.setTimeout(() => {
                     setContents((prev) => ({
                         ...prev,
-                        [item.url]: (prev[item.url] || []).map((currentTool) =>
-                            currentTool.id === tool.toolId
-                                ? {
-                                      ...currentTool,
-                                      status: ToolStatusEnum.RUNNING,
-                                  }
-                                : currentTool,
+                        [item.domain]: (prev[item.domain] || []).map(
+                            (currentTool) =>
+                                currentTool.id === tool.toolId
+                                    ? {
+                                          ...currentTool,
+                                          status: ToolStatusEnum.RUNNING,
+                                      }
+                                    : currentTool,
                         ),
                     }));
                 }, baseDelay);
 
-                timeoutRefs.current[item.url].push(startTimeout);
+                timeoutRefs.current[item.domain].push(startTimeout);
 
                 tool.chunks.forEach((chunk, chunkIndex) => {
                     const timeoutId = window.setTimeout(
@@ -69,7 +70,7 @@ export const useMockAgent = (data: AffiliateItem[]) => {
                             };
 
                             setContents((prev) => {
-                                const currentTools = prev[item.url] || [];
+                                const currentTools = prev[item.domain] || [];
 
                                 const updatedTools = currentTools.map(
                                     (currentTool) => {
@@ -93,14 +94,14 @@ export const useMockAgent = (data: AffiliateItem[]) => {
 
                                 return {
                                     ...prev,
-                                    [item.url]: updatedTools,
+                                    [item.domain]: updatedTools,
                                 };
                             });
                         },
                         baseDelay + chunkIndex * TOKEN_DELAY,
                     );
 
-                    timeoutRefs.current[item.url].push(timeoutId);
+                    timeoutRefs.current[item.domain].push(timeoutId);
                 });
             });
         });

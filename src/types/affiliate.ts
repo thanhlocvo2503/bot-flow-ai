@@ -2,53 +2,47 @@ export enum ToolStatusEnum {
     RUNNING = 'RUNNING',
     DONE = 'DONE',
     ERROR = 'ERROR',
+    IDLE = 'IDLE',
 }
 
-export type SSEEventName =
-    | 'status'
-    | 'tool_start'
-    | 'tool_end'
-    | 'final_answer';
+export enum AgentEventEnum {
+    THINKING = 'thinking',
+    TOOL_CALL = 'tool_call',
+    TOOL_RESULT = 'tool_result',
+    FINAL_RESPONSE = 'final_response',
+    ERROR = 'error',
+}
 
-export type ParsedSSEEvent = {
-    event: SSEEventName;
-    data: Record<string, any>;
+export type AgentEventType =
+    | 'thinking'
+    | 'tool_call'
+    | 'tool_result'
+    | 'final_response'
+    | 'error';
+
+export type AgentEvent = {
+    id?: string;
+    type: AgentEventType;
+    payload: Record<string, any>;
+    timestamp?: string;
 };
 
-export type StatusItem = {
-    message: string;
-    code?: string;
-    tool?: string;
-    traceId?: string;
-    elapsedMs?: number;
-    createdAt: number;
+export type StepGroup = {
+    step: number;
+    events: AgentEvent[];
 };
 
-export type ToolExecution = {
-    id: string;
-    tool: string;
-    status: ToolStatusEnum;
-    input?: string;
-    output?: string;
-    message?: string;
-    traceId?: string;
-    elapsedMs?: number;
-    startedAt?: number;
-    endedAt?: number;
-};
-
-export type AgentStreamState = {
-    threadId?: string;
-    steps: StatusItem[];
-    tools: ToolExecution[];
-    activeToolId?: string;
-    finalAnswer: string;
-    isDone: boolean;
+export type AgentRunState = {
+    runId?: string;
+    events: AgentEvent[];
+    thinking: string;
+    finalAnswer?: Record<string, any> | string;
     isStreaming: boolean;
+    isDone: boolean;
     error?: string;
 };
 
-export type AgentStreamStateMap = Record<string, AgentStreamState>;
+export type AgentRunStateMap = Record<string, AgentRunState>;
 
 export type ToolExecutionMock = {
     id: string;
@@ -61,11 +55,13 @@ export type ToolExecutionMap = Record<string, ToolExecutionMock[]>;
 
 export interface StartPayload {
     domain: string;
-    prompt: string;
+    input: string;
+    saveMemory: boolean;
 }
 
 export type AffiliateItem = {
     name?: string;
-    url: string;
-    prompt: string;
+    domain: string;
+    input: string;
+    saveMemory: boolean;
 };

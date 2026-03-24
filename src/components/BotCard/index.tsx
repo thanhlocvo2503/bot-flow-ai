@@ -10,8 +10,8 @@ import { cn } from '@/utils';
 // Hooks
 import { useMockOllamaStream } from '@/hooks';
 
-import BotActive from '@/assets/images/bot-active-image.webp';
-import BotSleeping from '@/assets/images/bot-sleep-image.webp';
+import BotActive from '@/assets/images/bot-active-image.gif';
+import BotSleeping from '@/assets/images/bot-sleep-image.gif';
 
 interface IBotCardProps {
     status?: STATUS;
@@ -64,12 +64,12 @@ const BotCard = ({ status = STATUS.ACTIVE }: IBotCardProps) => {
             <div
                 className={cn(
                     'size-42 rounded-full m-auto flex items-center justify-center',
-                    status === STATUS.ACTIVE && 'bg-blue-50/25 animate-bounce',
+                    status === STATUS.ACTIVE && 'bg-blue-50/25 animate-pulse',
                 )}
             >
                 <div
                     className={cn(
-                        'w-25 h-25 flex items-center justify-center border-4 border-white shadow-gray-200 bg-gray-100 rounded-full',
+                        'w-42 h-42 flex items-center justify-center border-4 border-white shadow-gray-200 bg-slate-100 rounded-full',
                         status === STATUS.ACTIVE &&
                             'shadow-blue-200 bg-blue-100',
                     )}
@@ -77,6 +77,8 @@ const BotCard = ({ status = STATUS.ACTIVE }: IBotCardProps) => {
                     <img
                         src={status === STATUS.ACTIVE ? BotActive : BotSleeping}
                         alt="Bot"
+                        width="130"
+                        height="130"
                     />
                 </div>
             </div>

@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// Types
 import type {
     AffiliateItem,
-    AgentStreamState,
-    AgentStreamStateMap,
+    AgentEvent,
+    AgentRunState,
+    AgentRunStateMap,
     StartPayload,
 } from '@/types';
 
-// Utils
-import {
-    createInitialAgentStreamState,
-    parseSSEChunk,
-    reduceAgentSSEEvent,
-} from '@/utils';
+import { parseSSEChunk } from '@/utils';
+import { createAgentRun, getAgentRunLiveReader } from '@/services';
 
-// Services
-import { aiPost } from '@/services';
+const createInitialRunState = (): AgentRunState => ({
+    runId: undefined,
+    events: [],
+    finalAnswer: undefined,
+    thinking: '',
+    isStreaming: false,
+    isDone: false,
+    error: undefined,
+});
 
 const getDomainFromUrl = (url: string) => {
     try {
@@ -30,25 +33,23 @@ const getDomainFromUrl = (url: string) => {
 };
 
 const buildPayloadFromItem = (item: AffiliateItem): StartPayload => ({
-    domain: getDomainFromUrl(item.url),
-    prompt: item.prompt,
+    domain: getDomainFromUrl(item.domain),
+    input: item.input || 'extract all pricing of their service',
+    saveMemory: item.saveMemory,
 });
 
 export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
-    const [streamMap, setStreamMap] = useState<AgentStreamStateMap>({});
+    const [streamMap, setStreamMap] = useState<AgentRunStateMap>({});
     const [activeCount, setActiveCount] = useState(0);
 
     const abortMapRef = useRef<Record<string, AbortController>>({});
 
     const isLoading = activeCount > 0;
 
-    const updateStreamState = useCallback(
-        (
-            url: string,
-            updater: (prev: AgentStreamState) => AgentStreamState,
-        ) => {
+    const updateRunState = useCallback(
+        (url: string, updater: (prev: AgentRunState) => AgentRunState) => {
             setStreamMap((prev) => {
-                const current = prev[url] ?? createInitialAgentStreamState();
+                const current = prev[url] ?? createInitialRunState();
 
                 return {
                     ...prev,
@@ -59,123 +60,105 @@ export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
         [],
     );
 
-    const beginStream = useCallback(
-        (url: string) => {
-            setActiveCount((prev) => prev + 1);
+    const appendEvents = useCallback(
+        (url: string, events: AgentEvent[]) => {
+            if (!events.length) return;
 
-            updateStreamState(url, () => ({
-                ...createInitialAgentStreamState(),
-                isStreaming: true,
-                error: undefined,
-            }));
-        },
-        [updateStreamState],
-    );
+            updateRunState(url, (prev) => {
+                let finalAnswer = prev.finalAnswer;
+                let isDone = prev.isDone;
+                let thinking = prev.thinking;
 
-    const finishStream = useCallback(
-        (url: string) => {
-            setActiveCount((prev) => Math.max(0, prev - 1));
+                for (const event of events) {
+                    if (event.type === 'thinking') {
+                        thinking += event.payload?.content || '';
+                    }
 
-            updateStreamState(url, (prev) => ({
-                ...prev,
-                isStreaming: false,
-            }));
-        },
-        [updateStreamState],
-    );
-
-    const stopStream = useCallback(
-        (url: string) => {
-            const controller = abortMapRef.current[url];
-
-            if (!controller) return;
-
-            controller.abort();
-            delete abortMapRef.current[url];
-
-            finishStream(url);
-        },
-        [finishStream],
-    );
-
-    const consumeReader = useCallback(
-        async (
-            url: string,
-            reader: ReadableStreamDefaultReader<Uint8Array>,
-        ) => {
-            const decoder = new TextDecoder('utf-8');
-            let buffer = '';
-
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-
-                const chunks = buffer.split('\n\n');
-                buffer = chunks.pop() || '';
-
-                for (const chunk of chunks) {
-                    const events = parseSSEChunk(`${chunk}\n\n`);
-
-                    for (const event of events) {
-                        updateStreamState(url, (prev) =>
-                            reduceAgentSSEEvent(
-                                {
-                                    ...prev,
-                                    isStreaming: true,
-                                    error: undefined,
-                                },
-                                event,
-                            ),
-                        );
+                    if (event.type === 'final_response') {
+                        finalAnswer = event.payload?.answer;
+                        isDone = true;
                     }
                 }
-            }
 
-            if (buffer.trim()) {
-                const remainEvents = parseSSEChunk(buffer);
-
-                for (const event of remainEvents) {
-                    updateStreamState(url, (prev) =>
-                        reduceAgentSSEEvent(
-                            {
-                                ...prev,
-                                isStreaming: true,
-                                error: undefined,
-                            },
-                            event,
-                        ),
-                    );
-                }
-            }
+                return {
+                    ...prev,
+                    events: [...prev.events, ...events],
+                    thinking,
+                    finalAnswer,
+                    isDone,
+                };
+            });
         },
-        [updateStreamState],
+        [updateRunState],
     );
 
     const startStream = useCallback(
         async (item: AffiliateItem) => {
-            stopStream(item.url);
+            const existing = abortMapRef.current[item.domain];
+            if (existing) {
+                existing.abort();
+                delete abortMapRef.current[item.domain];
+            }
 
             const controller = new AbortController();
-            abortMapRef.current[item.url] = controller;
+            abortMapRef.current[item.domain] = controller;
 
-            beginStream(item.url);
+            setActiveCount((prev) => prev + 1);
+
+            updateRunState(item.domain, () => ({
+                ...createInitialRunState(),
+                isStreaming: true,
+            }));
 
             try {
                 const payload = buildPayloadFromItem(item);
-                const reader = await aiPost(payload, controller.signal);
+                const { runId } = await createAgentRun(
+                    payload,
+                    controller.signal,
+                );
 
-                await consumeReader(item.url, reader);
+                updateRunState(item.domain, (prev) => ({
+                    ...prev,
+                    runId,
+                    isStreaming: true,
+                }));
 
-                updateStreamState(item.url, (prev) => ({
+                const reader = await getAgentRunLiveReader(
+                    runId,
+                    controller.signal,
+                );
+                const decoder = new TextDecoder('utf-8');
+
+                let buffer = '';
+
+                // eslint-disable-next-line no-constant-condition
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    const chunks = buffer.split('\n\n');
+                    buffer = chunks.pop() || '';
+
+                    for (const chunk of chunks) {
+                        const events = parseSSEChunk(`${chunk}\n\n`);
+                        appendEvents(item.domain, events);
+                    }
+                }
+
+                if (buffer.trim()) {
+                    const events = parseSSEChunk(buffer);
+                    appendEvents(item.domain, events);
+                }
+
+                updateRunState(item.domain, (prev) => ({
                     ...prev,
                     isStreaming: false,
                 }));
             } catch (err) {
                 if ((err as Error).name !== 'AbortError') {
-                    updateStreamState(item.url, (prev) => ({
+                    updateRunState(item.domain, (prev) => ({
                         ...prev,
                         isStreaming: false,
                         error:
@@ -185,17 +168,16 @@ export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
                     }));
                 }
             } finally {
-                delete abortMapRef.current[item.url];
-                finishStream(item.url);
+                delete abortMapRef.current[item.domain];
+                setActiveCount((prev) => Math.max(0, prev - 1));
+
+                updateRunState(item.domain, (prev) => ({
+                    ...prev,
+                    isStreaming: false,
+                }));
             }
         },
-        [
-            beginStream,
-            consumeReader,
-            finishStream,
-            stopStream,
-            updateStreamState,
-        ],
+        [appendEvents, updateRunState],
     );
 
     const startAll = useCallback(() => {
@@ -204,41 +186,19 @@ export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
         });
     }, [items, startStream]);
 
-    const stopAll = useCallback(() => {
-        Object.keys(abortMapRef.current).forEach((url) => {
-            abortMapRef.current[url]?.abort();
-            delete abortMapRef.current[url];
-        });
-
-        setActiveCount(0);
-
-        setStreamMap((prev) => {
-            const next = { ...prev };
-
-            Object.keys(next).forEach((url) => {
-                next[url] = {
-                    ...next[url],
-                    isStreaming: false,
-                };
-            });
-
-            return next;
-        });
-    }, []);
-
     useEffect(() => {
-        const initialMap: AgentStreamStateMap = {};
+        const initial: AgentRunStateMap = {};
 
         items.forEach((item) => {
-            initialMap[item.url] = createInitialAgentStreamState();
+            initial[item.domain] = createInitialRunState();
         });
 
-        setStreamMap(initialMap);
+        setStreamMap(initial);
 
         return () => {
-            Object.values(abortMapRef.current).forEach((controller) => {
-                controller.abort();
-            });
+            Object.values(abortMapRef.current).forEach((controller) =>
+                controller.abort(),
+            );
             abortMapRef.current = {};
         };
     }, [items]);
@@ -249,9 +209,7 @@ export const useAgentSSEMultiStream = (items: AffiliateItem[]) => {
             streamMap,
             startAll,
             startStream,
-            stopAll,
-            stopStream,
         }),
-        [isLoading, startAll, startStream, stopAll, stopStream, streamMap],
+        [isLoading, streamMap, startAll, startStream],
     );
 };

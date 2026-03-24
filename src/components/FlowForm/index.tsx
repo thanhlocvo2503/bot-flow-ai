@@ -25,8 +25,9 @@ const FlowForm = ({
         reValidateMode: 'onChange',
         resolver: zodResolver(FlowSchema),
         defaultValues: {
-            url: '',
-            prompt: 'extract all pricing of their service',
+            domain: '',
+            input: "research this domain, don't use semrush",
+            saveMemory: true,
         },
     });
 
@@ -44,39 +45,48 @@ const FlowForm = ({
                 onSubmit={handleSubmit(handleSubmitForm)}
                 className="w-full flex flex-col items-center justify-center gap-4"
             >
-                <Controller
-                    control={control}
-                    name="url"
-                    render={({ field, fieldState: { error } }) => (
-                        <InputField
-                            leftIcon={<Globe color="#94A3B8" size={20} />}
-                            type="text"
-                            placeholder="https://example.com/target-page"
-                            label="URL"
-                            {...field}
-                            isError={!!error}
-                            errorMessage={error?.message}
-                            inputClass="p-5"
+                {!isLoading && (
+                    <>
+                        <Controller
+                            control={control}
+                            name="domain"
+                            render={({ field, fieldState: { error } }) => (
+                                <InputField
+                                    leftIcon={
+                                        <Globe color="#94A3B8" size={20} />
+                                    }
+                                    type="text"
+                                    placeholder="https://example.com/target-page"
+                                    label="URL"
+                                    {...field}
+                                    isError={!!error}
+                                    errorMessage={error?.message}
+                                    inputClass="p-5"
+                                />
+                            )}
                         />
-                    )}
-                />
-                <Controller
-                    control={control}
-                    name="prompt"
-                    render={({ field, fieldState: { error } }) => (
-                        <TextareaField
-                            label="Prompt"
-                            leftIcon={
-                                <SquareTerminal color="#94A3B8" size={20} />
-                            }
-                            placeholder="What should the bot do? e.g., 'Find all product prices and export to CSV'"
-                            {...field}
-                            isError={!!error}
-                            errorMessage={error?.message}
-                            inputClass="h-32 p-5"
+                        <Controller
+                            control={control}
+                            name="input"
+                            render={({ field, fieldState: { error } }) => (
+                                <TextareaField
+                                    label="Prompt"
+                                    leftIcon={
+                                        <SquareTerminal
+                                            color="#94A3B8"
+                                            size={20}
+                                        />
+                                    }
+                                    placeholder="What should the bot do? e.g., 'Find all product prices and export to CSV'"
+                                    {...field}
+                                    isError={!!error}
+                                    errorMessage={error?.message}
+                                    inputClass="h-32 p-5"
+                                />
+                            )}
                         />
-                    )}
-                />
+                    </>
+                )}
 
                 <div className="w-full flex gap-4">
                     <Button

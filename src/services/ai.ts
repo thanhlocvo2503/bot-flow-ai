@@ -4,23 +4,48 @@ import { StartPayload } from '@/types';
 // Constants
 import { API_PATH, BASE_URL } from '@/constants';
 
-export const aiPost = async (payload: StartPayload, signal?: AbortSignal) => {
-    const response = await fetch(`${BASE_URL}${API_PATH.RESEARCH_DOMAIN}`, {
+export const createAgentRun = async (
+    payload: StartPayload,
+    signal?: AbortSignal,
+) => {
+    const response = await fetch(`${BASE_URL}/${API_PATH.AGENT_RUN}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Accept: 'text/event-stream',
         },
         body: JSON.stringify(payload),
-        signal: signal,
+        signal,
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`Create run failed: HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return data as {
+        runId: string;
+    };
+};
+
+export const getAgentRunLiveReader = async (
+    runId: string,
+    signal?: AbortSignal,
+) => {
+    const response = await fetch(`${BASE_URL}/${API_PATH.AGENT_LIVE(runId)}`, {
+        method: 'GET',
+        headers: {
+            Accept: 'text/event-stream',
+        },
+        signal,
+    });
+
+    if (!response.ok) {
+        throw new Error(`Live stream failed: HTTP ${response.status}`);
     }
 
     if (!response.body) {
-        throw new Error('Response body is empty');
+        throw new Error('Live stream response body is empty');
     }
 
     return response.body.getReader();

@@ -1,8 +1,5 @@
 import { Info } from 'lucide-react';
 
-// Mocks
-import { MOCK_TRAFFIC } from '@/__mocks__';
-
 // Components
 import {
     Dialog,
@@ -21,31 +18,35 @@ import AiSourcesSection from '../AiSourcesSection';
 import CompetitorsSection from '../CompetitorsSection';
 import { Button } from '../common';
 
-const TrafficDialog = () => (
+interface TrafficDialogProps {
+    traffic?: any;
+}
+
+const TrafficDialog = ({ traffic }: TrafficDialogProps) => (
     <Dialog>
         <DialogTrigger asChild>
             <Button variant="link">
                 <Info />
             </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-max">
+        <DialogContent className="sm:max-w-7xl">
             <DialogHeader>
                 <DialogTitle className="text-2xl font-bold">
-                    {MOCK_TRAFFIC.domain}
+                    {traffic?.domain}
                 </DialogTitle>
                 <DialogDescription className="mt-2 text-sm">
-                    {MOCK_TRAFFIC.source.name} • {MOCK_TRAFFIC.source.method} •{' '}
-                    {MOCK_TRAFFIC.dbStatus}
+                    {traffic?.source?.name || ''} • {traffic?.source.method} •{' '}
+                    {traffic?.dbStatus}
                 </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col items-start gap-2">
                 <div className="flex w-full gap-2">
-                    <TrafficSection data={MOCK_TRAFFIC} />
-                    <AuthoritySection data={MOCK_TRAFFIC} />
-                    <AiOverviewSection data={MOCK_TRAFFIC} />
+                    <TrafficSection data={traffic || {}} />
+                    <AuthoritySection data={traffic || {}} />
+                    <AiOverviewSection data={traffic || {}} />
                 </div>
-                <AiSourcesSection data={MOCK_TRAFFIC} />
-                <CompetitorsSection data={MOCK_TRAFFIC} />
+                <AiSourcesSection data={traffic || {}} />
+                <CompetitorsSection data={traffic || {}} />
             </div>
             <DialogFooter className="justify-end">
                 <DialogClose asChild>
