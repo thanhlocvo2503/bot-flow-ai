@@ -10,18 +10,12 @@ import { AffiliateItem, AgentRunStateMap } from '@/types';
 import { groupEventsByStep } from '@/utils';
 
 interface DomainTabsProps {
-    isLoading?: boolean;
     items: AffiliateItem[];
     startAll: () => void;
     streamMap: AgentRunStateMap;
 }
 
-const DomainTabs = ({
-    items,
-    isLoading,
-    startAll,
-    streamMap,
-}: DomainTabsProps) => {
+const DomainTabs = ({ items, startAll, streamMap }: DomainTabsProps) => {
     useEffect(() => {
         startAll();
     }, [startAll]);
@@ -32,12 +26,12 @@ const DomainTabs = ({
             className="w-full mt-5"
             orientation="vertical"
         >
-            <TabsList className="p-2 bg-white">
+            <TabsList className="p-2 bg-white gap-3">
                 {items.map((item) => (
                     <TabsTrigger
                         key={item.domain}
                         value={item.domain}
-                        className="text-left"
+                        className="text-left hover:bg-slate-500"
                     >
                         {item.domain}
                     </TabsTrigger>
@@ -63,7 +57,7 @@ const DomainTabs = ({
 
                             <Tool
                                 stepGroups={stepGroups}
-                                isRunning={isLoading}
+                                isRunning={state?.isStreaming}
                             />
                         </div>
                     </TabsContent>

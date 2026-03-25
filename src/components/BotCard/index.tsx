@@ -12,12 +12,17 @@ import { useMockOllamaStream } from '@/hooks';
 
 import BotActive from '@/assets/images/bot-active-image.gif';
 import BotSleeping from '@/assets/images/bot-sleep-image.gif';
+import SecondCounter from './SecondCounter';
 
 interface IBotCardProps {
+    isRunning?: boolean;
     status?: STATUS;
 }
 
-const BotCard = ({ status = STATUS.ACTIVE }: IBotCardProps) => {
+const BotCard = ({
+    status = STATUS.ACTIVE,
+    isRunning = false,
+}: IBotCardProps) => {
     const { content, isStreaming, startStream, resetStream } =
         useMockOllamaStream();
 
@@ -59,6 +64,8 @@ const BotCard = ({ status = STATUS.ACTIVE }: IBotCardProps) => {
                         {isStreaming ? 'THINKING...' : status}
                     </span>
                 </div>
+
+                {isRunning && <SecondCounter isRunning={isRunning} />}
             </div>
 
             <div

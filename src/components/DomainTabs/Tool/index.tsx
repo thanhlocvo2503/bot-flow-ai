@@ -2,23 +2,21 @@
 import { AgentEventEnum, StepGroup } from '@/types';
 
 // Constants
-import SecondCounter from '@/components/BotCard/SecondCounter';
+import TrafficDialog from '@/components/TrafficDialog';
 
 // Utils
 import { getEventTitle } from '@/utils';
-import TrafficDialog from '@/components/TrafficDialog';
 
 interface ToolProps {
     isRunning?: boolean;
     stepGroups?: StepGroup[];
 }
 
-const Tool = ({ isRunning = false, stepGroups = [] }: ToolProps) => {
+const Tool = ({ stepGroups = [] }: ToolProps) => {
     return (
         <div className="rounded-xl border bg-slate-50 p-4">
             <div className="flex items-center justify-between">
                 <div className="mb-3 font-medium">Execution by step</div>
-                <SecondCounter isRunning={isRunning} />
             </div>
 
             <div className="space-y-4">

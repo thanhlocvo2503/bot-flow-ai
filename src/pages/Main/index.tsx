@@ -14,10 +14,11 @@ import { STATUS } from '@/constants';
 import { useAgentSSEMultiStream } from '@/hooks';
 
 export const MainPage = () => {
-    const [statusBot, setStatusBot] = useState<STATUS>(STATUS.SLEEPING);
     const [items, setItems] = useState<AffiliateItem[]>([]);
 
     const { streamMap, isLoading, startAll } = useAgentSSEMultiStream(items);
+
+    const statusBot = isLoading ? STATUS.ACTIVE : STATUS.SLEEPING;
 
     const handleSubmitForm = (data: TFlowForm) => {
         const payload = {
@@ -26,7 +27,6 @@ export const MainPage = () => {
         };
 
         setItems([payload]);
-        setStatusBot(STATUS.ACTIVE);
     };
 
     return (
@@ -40,13 +40,12 @@ export const MainPage = () => {
 
                 <FlowForm onSubmit={handleSubmitForm} isLoading={isLoading} />
 
-                <BotCard status={statusBot} />
+                <BotCard status={statusBot} isRunning={isLoading} />
             </div>
 
             <div className="w-full max-w-6xl m-auto flex flex-col items-center mb-8">
                 {items.length ? (
                     <DomainTabs
-                        isLoading={isLoading}
                         items={items}
                         streamMap={streamMap}
                         startAll={startAll}
